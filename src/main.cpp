@@ -1,24 +1,27 @@
+
 #include <Arduino.h>
 
 #include "Scherm.h"
 #include "InputSystem.h"
+#include "GameManager.h"
 #include "VierkantGame.h"
 
 // Hardware
 pws::Scherm scherm;
 pws::InputSystem inputSystem;
 
+// GameManager
+pws::GameManager gameManager;
+
 // Games
 pws::VierkantGame vierkantGame;
 
-// Actieve game
-pws::Game* actieveGame = &vierkantGame;
-
 // Frame timing
-static constexpr uint32_t FRAME_INTERVAL_MS = 16; // Ongeveer 60 FPS
+static constexpr uint32_t FRAME_INTERVAL_MS = 16;
 
 uint32_t laatsteFrame = 0;
 
+// Diagnostiek
 uint32_t fpsTimer = 0;
 uint32_t frameCounter = 0;
 
@@ -30,7 +33,8 @@ void setup() {
 
     // Hardware initialiseren
     if (!scherm.begin()) {
-        Serial.println("Fout bij het initialiseren van het scherm!");
+        Serial.println("Scherminitialisatie mislukt!");
+
         while (true) {
             delay(1000);
         }
@@ -38,14 +42,17 @@ void setup() {
 
     inputSystem.begin();
 
+    // Games registreren
+    gameManager.voegGameToe("Vierkant", vierkantGame);
+
+    // Hoofdmenu starten
+    gameManager.begin();
+
     Serial.println("Console gestart!");
 
-    // Game initialiseren
-    actieveGame->begin(scherm);
     laatsteFrame = millis();
     fpsTimer = laatsteFrame;
 }
-
 
 void loop() {
     uint32_t huidigeTijd = millis();
@@ -55,64 +62,63 @@ void loop() {
         return;
     }
 
-    // DeltaTime berekenen
+    // DeltaTime
     float deltaTijd =
         (huidigeTijd - laatsteFrame) / 1000.0f;
 
     laatsteFrame = huidigeTijd;
 
-    // Input verwerken
+    // Knoppen bijwerken
     inputSystem.updateKnopStates();
 
-    // Game logica bijwerken
-    actieveGame->update(deltaTijd, inputSystem);
+    // GameManager bijwerken
+    gameManager.update(deltaTijd, inputSystem, scherm);
 
     // Frame beginnen
     scherm.beginFrame();
 
-    // Game renderen
-    actieveGame->render(scherm);
+    // GameManager tekent menu of actieve game
+    gameManager.render(scherm);
 
-    // Framebuffer versturen en overdracht meten
-    uint32_t transferStart = micros();
+    // Frame versturen
+    uint32_t start = micros();
 
     bool verstuurd = scherm.endFrame();
 
-    uint32_t transferDuur = micros() - transferStart;
+    uint32_t duur = micros() - start;
 
-    // Een volledig gameframe is verwerkt
     frameCounter++;
 
-    // Alleen echte schermoverdrachten meten
     if (verstuurd) {
-        transferTotaal += transferDuur;
+        transferTotaal += duur;
         transferAantal++;
     }
 
-    // Diagnostiek iedere seconde
+    // Diagnostiek
     uint32_t nu = millis();
-    uint32_t verstrekenTijd = nu - fpsTimer;
 
-    if (verstrekenTijd >= 1000) {
+    if (nu - fpsTimer >= 1000) {
+        uint32_t verstreken = nu - fpsTimer;
+
         float fps =
-            frameCounter * 1000.0f / verstrekenTijd;
+            frameCounter * 1000.0f / verstreken;
 
-        float gemiddeldeTransfer = transferAantal > 0
-            ? static_cast<float>(transferTotaal) / transferAantal
+        float gemiddeldeTransfer =
+            transferAantal > 0
+            ? static_cast<float>(transferTotaal)
+              / transferAantal
             : 0.0f;
 
         Serial.printf(
-            "FPS: %.1f | Transfers: %lu | Gem. transfer: %.1f us\n",
+            "FPS: %.1f | Transfers: %lu | Transfer: %.1f us\n",
             fps,
             static_cast<unsigned long>(transferAantal),
             gemiddeldeTransfer
         );
 
-        // Meetwaarden resetten
         frameCounter = 0;
-        transferAantal = 0;
         transferTotaal = 0;
+        transferAantal = 0;
         fpsTimer = nu;
     }
 }
-

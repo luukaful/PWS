@@ -12,6 +12,7 @@
 #define KNOP_B 5
 #define KNOP_X 6
 #define KNOP_Y 7
+#define KNOP_START 8
 
 // Knop pins (GPIO)
 #define PIN_KNOP_D_UP 4
@@ -22,6 +23,8 @@
 #define PIN_KNOP_B 16
 #define PIN_KNOP_X 17
 #define PIN_KNOP_Y 18
+#define PIN_KNOP_START 8
+
 
 namespace pws {
     class InputSystem {
