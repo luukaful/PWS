@@ -1,18 +1,10 @@
+
 #ifndef PWS_INPUTSYSTEM_H
 #define PWS_INPUTSYSTEM_H
 
 #include <Arduino.h>
-
-// Knop constanten
-#define KNOP_D_UP 0
-#define KNOP_D_DOWN 1
-#define KNOP_D_LEFT 2
-#define KNOP_D_RIGHT 3
-#define KNOP_A 4
-#define KNOP_B 5
-#define KNOP_X 6
-#define KNOP_Y 7
-#define KNOP_START 8
+#include <cstddef>
+#include <cstdint>
 
 // Knop pins (GPIO)
 #define PIN_KNOP_D_UP 4
@@ -25,12 +17,27 @@
 #define PIN_KNOP_Y 18
 #define PIN_KNOP_START 8
 
-
 namespace pws {
+
+    enum class Knop : uint8_t {
+        D_UP,
+        D_DOWN,
+        D_LEFT,
+        D_RIGHT,
+        A,
+        B,
+        X,
+        Y,
+        START,
+
+        AANTAL_KNOPPEN
+    };
+
+    constexpr std::size_t AANTAL_KNOPPEN =
+        static_cast<std::size_t>(Knop::AANTAL_KNOPPEN);
+
     class InputSystem {
     private:
-        static constexpr uint8_t AANTAL_KNOPPEN = 8;
-
         bool knopStates[AANTAL_KNOPPEN] = {};
         bool vorigeKnopStates[AANTAL_KNOPPEN] = {};
 
@@ -38,9 +45,10 @@ namespace pws {
         void begin();
         void updateKnopStates();
 
-        [[nodiscard]] bool knopGedrukt(int knop) const;
-        [[nodiscard]] bool knopZojuistGedrukt(int knop) const;
+        [[nodiscard]] bool knopGedrukt(Knop knop) const;
+        [[nodiscard]] bool knopZojuistGedrukt(Knop knop) const;
     };
+
 }
 
 #endif // PWS_INPUTSYSTEM_H

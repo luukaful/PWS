@@ -36,13 +36,13 @@ namespace pws {
                 return;
             }
 
-            if (input.knopZojuistGedrukt(KNOP_D_DOWN)) {
+            if (input.knopZojuistGedrukt(Knop::D_DOWN)) {
                 geselecteerdeGame =
                     (geselecteerdeGame + 1) % aantalGames;
 
                 volledigVernieuwen = true;
             }
-            else if (input.knopZojuistGedrukt(KNOP_D_UP)) {
+            else if (input.knopZojuistGedrukt(Knop::D_UP)) {
                 geselecteerdeGame =
                     (geselecteerdeGame + aantalGames - 1)
                     % aantalGames;
@@ -51,7 +51,7 @@ namespace pws {
             }
 
             // Geselecteerde game starten
-            if (input.knopZojuistGedrukt(KNOP_A)) {
+            if (input.knopZojuistGedrukt(Knop::A)) {
                 actieveGame = games[geselecteerdeGame].game;
 
                 actieveGame->begin(scherm);
@@ -61,8 +61,8 @@ namespace pws {
             return;
         }
 
-        // Met B terug naar het hoofdmenu
-        if (input.knopZojuistGedrukt(KNOP_START)) {
+        // Met START terug naar het hoofdmenu
+        if (input.knopZojuistGedrukt(Knop::START)) {
             actieveGame = nullptr;
             volledigVernieuwen = true;
             return;
@@ -143,7 +143,7 @@ namespace pws {
         sprite.setTextColor(TFT_LIGHTGREY);
 
         sprite.drawString(
-            "A: Start   B: Terug",
+            "A: Start   START: Terug",
             14, hoogte - 22, 2
         );
     }

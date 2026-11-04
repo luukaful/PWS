@@ -25,19 +25,19 @@ namespace pws {
     ) {
         float beweging = SNELHEID * deltaTime;
 
-        if (input.knopGedrukt(KNOP_D_LEFT)) {
+        if (input.knopGedrukt(Knop::D_LEFT)) {
             x -= beweging;
         }
 
-        if (input.knopGedrukt(KNOP_D_RIGHT)) {
+        if (input.knopGedrukt(Knop::D_RIGHT)) {
             x += beweging;
         }
 
-        if (input.knopGedrukt(KNOP_D_UP)) {
+        if (input.knopGedrukt(Knop::D_UP)) {
             y -= beweging;
         }
 
-        if (input.knopGedrukt(KNOP_D_DOWN)) {
+        if (input.knopGedrukt(Knop::D_DOWN)) {
             y += beweging;
         }
 
