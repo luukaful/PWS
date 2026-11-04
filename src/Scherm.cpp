@@ -36,7 +36,7 @@ namespace pws {
     }
 
     void Scherm::markDirty(int16_t x, int16_t y, int16_t w, int16_t h) {
-        if (w <- 0 || h < 0) {
+        if (w <= 0 || h <= 0) {
             return; // Ongeldige afmetingen
         }
 
@@ -63,34 +63,18 @@ namespace pws {
         }
     }
 
-
     bool Scherm::endFrame() {
         if (!dirty) {
             return false;
         }
 
-        uint32_t start = micros();
-
-        bool gelukt = sprite.pushSprite(
+        return sprite.pushSprite(
             dirtyX0, dirtyY0,
             dirtyX0, dirtyY0,
             dirtyX1 - dirtyX0,
             dirtyY1 - dirtyY0
         );
-
-        uint32_t duur = micros() - start;
-
-        Serial.printf(
-            "Transfer: %lu us | Gebied: %d x %d | Gelukt: %d\n",
-            static_cast<unsigned long>(duur),
-            dirtyX1 - dirtyX0,
-            dirtyY1 - dirtyY0,
-            gelukt
-        );
-
-        return gelukt;
     }
-
 
     TFT_eSPI& Scherm::getTFT() {
         return tft;

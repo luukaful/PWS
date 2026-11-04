@@ -40,9 +40,6 @@ void setup() {
 
     Serial.println("Console gestart!");
 
-    scherm.getTFT().drawString("Hello, World!", 10, 10);
-    delay(2000);
-
     // Game initialiseren
     actieveGame->begin(scherm);
     laatsteFrame = millis();

@@ -1,4 +1,5 @@
 
+#include <algorithm>
 #include "VierkantGame.h"
 
 namespace pws {
@@ -10,6 +11,11 @@ namespace pws {
 
         x = (schermBreedte - GROOTTE) / 2.0f;
         y = (schermHoogte - GROOTTE) / 2.0f;
+
+        vorigeX = static_cast<int16_t>(x);
+        vorigeY = static_cast<int16_t>(y);
+
+        eersteFrame = true;
     }
 
 
