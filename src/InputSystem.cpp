@@ -4,14 +4,14 @@ namespace pws {
 
     // GPIO-pin voor iedere knop
     static constexpr uint8_t knopPinnen[8] = {
-        PIN_KNOP_D_UP,
-        PIN_KNOP_D_DOWN,
-        PIN_KNOP_D_LEFT,
-        PIN_KNOP_D_RIGHT,
-        PIN_KNOP_A,
-        PIN_KNOP_B,
-        PIN_KNOP_X,
-        PIN_KNOP_Y
+        PIN_KNOP_D_UP,      // 0
+        PIN_KNOP_D_DOWN,    // 1
+        PIN_KNOP_D_LEFT,    // 2
+        PIN_KNOP_D_RIGHT,   // 3
+        PIN_KNOP_A,         // 4
+        PIN_KNOP_B,         // 5
+        PIN_KNOP_X,         // 6
+        PIN_KNOP_Y          // 7
     };
 
     void InputSystem::begin() {

@@ -3,18 +3,15 @@
 
 namespace pws {
 
+
     void VierkantGame::begin(Scherm& scherm) {
         schermBreedte = scherm.getBreedte();
         schermHoogte = scherm.getHoogte();
 
-        // Begin in het midden
         x = (schermBreedte - GROOTTE) / 2.0f;
         y = (schermHoogte - GROOTTE) / 2.0f;
-
-        eersteFrame = true;
-
-        scherm.getTFT().fillScreen(TFT_BLACK);
     }
+
 
     void VierkantGame::update(
         float deltaTime,
@@ -51,38 +48,52 @@ namespace pws {
         }
     }
 
+
+
     void VierkantGame::render(Scherm& scherm) {
-        TFT_eSPI& tft = scherm.getTFT();
+        TFT_eSprite& sprite = scherm.getSprite();
 
-        int16_t nieuweX = static_cast<int16_t>(x);
-        int16_t nieuweY = static_cast<int16_t>(y);
+        int16_t nx = static_cast<int16_t>(x);
+        int16_t ny = static_cast<int16_t>(y);
 
-        // Niets veranderd? Dan hoeven we niet te tekenen
+        // Geen beweging: geen nieuwe schermupdate
         if (!eersteFrame &&
-            nieuweX == vorigeX &&
-            nieuweY == vorigeY) {
+            nx == vorigeX &&
+            ny == vorigeY) {
             return;
             }
 
-        // Oude positie wissen
-        if (!eersteFrame) {
-            tft.fillRect(
-                vorigeX, vorigeY,
-                GROOTTE, GROOTTE,
-                TFT_BLACK
-            );
-        }
-
-        // Nieuwe positie tekenen
-        tft.fillRect(
-            nieuweX, nieuweY,
-            GROOTTE, GROOTTE,
-            TFT_GREEN
+        // Teken op de framebuffer
+        sprite.fillRect(
+            nx, ny, GROOTTE, GROOTTE, TFT_GREEN
         );
 
-        vorigeX = nieuweX;
-        vorigeY = nieuweY;
+        // Bepaal het gewijzigde gebied
+        int16_t x0 = eersteFrame
+            ? nx : std::min(nx, vorigeX);
+
+        int16_t y0 = eersteFrame
+            ? ny : std::min(ny, vorigeY);
+
+        int16_t x1 = eersteFrame
+            ? nx + GROOTTE
+            : std::max(nx, vorigeX) + GROOTTE;
+
+        int16_t y1 = eersteFrame
+            ? ny + GROOTTE
+            : std::max(ny, vorigeY) + GROOTTE;
+
+        scherm.markDirty(
+            x0, y0,
+            x1 - x0,
+            y1 - y0
+        );
+
+        vorigeX = nx;
+        vorigeY = ny;
         eersteFrame = false;
     }
+
+
 
 }

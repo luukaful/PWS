@@ -7,15 +7,29 @@
 namespace pws {
 class Scherm {
     TFT_eSPI tft = TFT_eSPI();
+    TFT_eSprite sprite = TFT_eSprite(&tft);
     int16_t hoogte = 0;
     int16_t breedte = 0;
 
+    bool dirty = false;
+    int16_t dirtyX0 = 0;
+    int16_t dirtyY0 = 0;
+    int16_t dirtyX1 = 0;
+    int16_t dirtyY1 = 0;
+
     public:
-    void begin();
+    bool begin();
+
+    void beginFrame();
+    bool endFrame();
 
     [[nodiscard]] TFT_eSPI& getTFT();
+    [[nodiscard]] TFT_eSprite& getSprite();
+
     [[nodiscard]] int16_t getHoogte() const;
     [[nodiscard]] int16_t getBreedte() const;
+
+    void markDirty(int16_t x, int16_t y, int16_t w, int16_t h);
 };
 }
 

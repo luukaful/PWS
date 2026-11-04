@@ -19,7 +19,6 @@ namespace pws {
 
         int16_t vorigeX = 0;
         int16_t vorigeY = 0;
-
         bool eersteFrame = true;
 
     public:
