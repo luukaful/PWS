@@ -1,10 +1,6 @@
-//
-// Created by luukd on 04/11/2026.
-//
-
 #ifndef PWS_INPUTSYSTEM_H
 #define PWS_INPUTSYSTEM_H
-#include <unordered_map>
+
 #include <Arduino.h>
 
 // Knop constanten
@@ -29,13 +25,19 @@
 
 namespace pws {
     class InputSystem {
-        std::unordered_map<int, bool> knopStates;
+    private:
+        static constexpr uint8_t AANTAL_KNOPPEN = 8;
+
+        bool knopStates[AANTAL_KNOPPEN] = {};
+        bool vorigeKnopStates[AANTAL_KNOPPEN] = {};
 
     public:
-        InputSystem();
+        void begin();
         void updateKnopStates();
-        bool knopGedrukt(int knop) const;
-    }; // pws
+
+        [[nodiscard]] bool knopGedrukt(int knop) const;
+        [[nodiscard]] bool knopZojuistGedrukt(int knop) const;
+    };
 }
 
-#endif //PWS_INPUTSYSTEM_H
+#endif // PWS_INPUTSYSTEM_H
