@@ -13,6 +13,7 @@ class Scherm {
     public:
     Scherm();
 
+    [[nodiscard]] TFT_eSPI& getTFT();
     [[nodiscard]] int getHoogte() const;
     [[nodiscard]] int getBreedte() const;
 };

@@ -8,10 +8,14 @@
 namespace pws {
     Scherm::Scherm() {
         tft.init();
-        tft.fillScreen(TFT_BLACK);
         tft.setRotation(1);
+        tft.fillScreen(TFT_BLACK);
         hoogte = tft.height();
         breedte = tft.width();
+    }
+
+    TFT_eSPI& Scherm::getTFT() {
+        return tft;
     }
 
     int Scherm::getBreedte() const {
