@@ -6,12 +6,13 @@
 #include "Scherm.h"
 
 namespace pws {
-    Scherm::Scherm() {
+    void Scherm::begin() {
         tft.init();
         tft.setRotation(1);
         tft.fillScreen(TFT_BLACK);
-        hoogte = tft.height();
+
         breedte = tft.width();
+        hoogte = tft.height();
     }
 
     TFT_eSPI& Scherm::getTFT() {

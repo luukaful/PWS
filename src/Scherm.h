@@ -1,7 +1,7 @@
 #ifndef PWS_SCHERM_H
 #define PWS_SCHERM_H
 
-#include <stdint.h>
+#include <cstdint>
 #include <TFT_eSPI.h>
 
 namespace pws {
@@ -11,7 +11,7 @@ class Scherm {
     int16_t breedte = 0;
 
     public:
-    Scherm();
+    void begin();
 
     [[nodiscard]] TFT_eSPI& getTFT();
     [[nodiscard]] int16_t getHoogte() const;
