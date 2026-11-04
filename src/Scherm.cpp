@@ -26,4 +26,4 @@ namespace pws {
     int16_t Scherm::getHoogte() const {
         return hoogte;
     }
-} // pws
+}

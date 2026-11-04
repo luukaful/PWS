@@ -2,9 +2,21 @@
 
 #include "Scherm.h"
 #include "InputSystem.h"
+#include "VierkantGame.h"
 
+// Hardware
 pws::Scherm scherm;
 pws::InputSystem inputSystem;
+
+// Games
+pws::VierkantGame vierkantGame;
+
+// Actieve game
+pws::Game* actieveGame = &vierkantGame;
+
+// Frame timing
+static constexpr uint32_t FRAME_INTERVAL_MS = 16; // ~60 FPS
+uint32_t laatsteFrame = 0;
 
 void setup() {
     Serial.begin(115200);
@@ -15,27 +27,29 @@ void setup() {
 
     Serial.println("Console gestart!");
 
-    Serial.println(
-        "Breedte: " + String(scherm.getBreedte())
-    );
+    // Game initialiseren
+    actieveGame->begin(scherm);
 
-    Serial.println(
-        "Hoogte: " + String(scherm.getHoogte())
-    );
+    laatsteFrame = millis();
 }
 
 void loop() {
+    uint32_t huidigeTijd = millis();
+
+    // Ongeveer 60 FPS
+    if (huidigeTijd - laatsteFrame < FRAME_INTERVAL_MS) {
+        return;
+    }
+
+    float deltaTijd = (huidigeTijd - laatsteFrame) / 1000.0f;
+    laatsteFrame = huidigeTijd;
+
+    // Knopstatus bijwerken
     inputSystem.updateKnopStates();
 
-    if (inputSystem.knopZojuistGedrukt(KNOP_D_UP)) {
-        scherm.getTFT().fillScreen(TFT_RED);
+    // Game logica bijwerken
+    actieveGame->update(deltaTijd, inputSystem);
 
-        Serial.println("D-UP ingedrukt!");
-    }
-
-    if (inputSystem.knopZojuistGedrukt(KNOP_D_RIGHT)) {
-        scherm.getTFT().fillScreen(TFT_BLUE);
-
-        Serial.println("D-RIGHT ingedrukt!");
-    }
+    // Game renderen
+    actieveGame->render(scherm);
 }

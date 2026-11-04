@@ -17,6 +17,6 @@ class Scherm {
     [[nodiscard]] int16_t getHoogte() const;
     [[nodiscard]] int16_t getBreedte() const;
 };
-} // pws
+}
 
-#endif //PWS_SCHERM_H
+#endif // PWS_SCHERM_H
