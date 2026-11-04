@@ -18,11 +18,11 @@ namespace pws {
         return tft;
     }
 
-    int Scherm::getBreedte() const {
+    int16_t Scherm::getBreedte() const {
         return breedte;
     }
 
-    int Scherm::getHoogte() const {
+    int16_t Scherm::getHoogte() const {
         return hoogte;
     }
 } // pws

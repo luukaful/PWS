@@ -7,15 +7,15 @@
 namespace pws {
 class Scherm {
     TFT_eSPI tft = TFT_eSPI();
-    int hoogte = 0;
-    int breedte = 0;
+    int16_t hoogte = 0;
+    int16_t breedte = 0;
 
     public:
     Scherm();
 
     [[nodiscard]] TFT_eSPI& getTFT();
-    [[nodiscard]] int getHoogte() const;
-    [[nodiscard]] int getBreedte() const;
+    [[nodiscard]] int16_t getHoogte() const;
+    [[nodiscard]] int16_t getBreedte() const;
 };
 } // pws
 
