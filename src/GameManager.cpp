@@ -62,7 +62,7 @@ namespace pws {
         }
 
         // Met B terug naar het hoofdmenu
-        if (input.knopZojuistGedrukt(KNOP_B)) {
+        if (input.knopZojuistGedrukt(KNOP_START)) {
             actieveGame = nullptr;
             volledigVernieuwen = true;
             return;
