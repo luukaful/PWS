@@ -71,11 +71,11 @@ void loop() {
     // Knoppen bijwerken
     inputSystem.updateKnopStates();
 
+    // Eerst de gewijzigde gebieden resetten, ook voor tekenwerk in game.begin().
+    scherm.beginFrame();
+
     // GameManager bijwerken
     gameManager.update(deltaTijd, inputSystem, scherm);
-
-    // Frame beginnen
-    scherm.beginFrame();
 
     // GameManager tekent menu of actieve game
     gameManager.render(scherm);
@@ -122,3 +122,4 @@ void loop() {
         fpsTimer = nu;
     }
 }
+

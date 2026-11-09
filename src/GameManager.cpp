@@ -54,6 +54,8 @@ namespace pws {
             if (input.knopZojuistGedrukt(Knop::A)) {
                 actieveGame = games[geselecteerdeGame].game;
 
+                // Verwijder het menu voordat de game zijn beginbeeld opbouwt.
+                scherm.clear();
                 actieveGame->begin(scherm);
                 volledigVernieuwen = true;
             }
@@ -82,19 +84,13 @@ namespace pws {
             actieveGame->render(scherm);
         }
 
-        // Bij een gamewissel het hele scherm verversen
-        if (volledigVernieuwen) {
-            scherm.markDirty(
-                0, 0,
-                scherm.getBreedte(),
-                scherm.getHoogte()
-            );
-
-            volledigVernieuwen = false;
-        }
+        // clear() markeert bij een volledige hertekening het hele scherm.
+        volledigVernieuwen = false;
     }
 
     void GameManager::tekenMenu(Scherm& scherm) {
+        // Verwijder het vorige spelbeeld of de vorige menu-inhoud.
+        scherm.clear();
         TFT_eSprite& sprite = scherm.getSprite();
 
         int16_t breedte = scherm.getBreedte();
@@ -149,3 +145,4 @@ namespace pws {
     }
 
 }
+

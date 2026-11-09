@@ -1,5 +1,4 @@
 
-#include <algorithm>
 #include "VierkantGame.h"
 
 namespace pws {
@@ -62,38 +61,28 @@ namespace pws {
         int16_t nx = static_cast<int16_t>(x);
         int16_t ny = static_cast<int16_t>(y);
 
-        // Geen beweging: geen nieuwe schermupdate
+        // De vorige pixels blijven bewaard: bij stilstand is niets nodig.
         if (!eersteFrame &&
             nx == vorigeX &&
             ny == vorigeY) {
             return;
-            }
+        }
 
-        // Teken op de framebuffer
+        // Herstel eerst de zwarte achtergrond op de oude positie.
+        // Bij een getekende achtergrond moet hier die achtergrond terugkomen.
+        if (!eersteFrame) {
+            sprite.fillRect(
+                vorigeX, vorigeY, GROOTTE, GROOTTE, TFT_BLACK
+            );
+            scherm.markDirty(vorigeX, vorigeY, GROOTTE, GROOTTE);
+        }
+
+        // Teken daarna de nieuwe positie, ook als beide posities overlappen.
         sprite.fillRect(
             nx, ny, GROOTTE, GROOTTE, TFT_GREEN
         );
-
-        // Bepaal het gewijzigde gebied
-        int16_t x0 = eersteFrame
-            ? nx : std::min(nx, vorigeX);
-
-        int16_t y0 = eersteFrame
-            ? ny : std::min(ny, vorigeY);
-
-        int16_t x1 = eersteFrame
-            ? nx + GROOTTE
-            : std::max(nx, vorigeX) + GROOTTE;
-
-        int16_t y1 = eersteFrame
-            ? ny + GROOTTE
-            : std::max(ny, vorigeY) + GROOTTE;
-
-        scherm.markDirty(
-            x0, y0,
-            x1 - x0,
-            y1 - y0
-        );
+        // Scherm voegt deze rechthoek samen met de oude positie.
+        scherm.markDirty(nx, ny, GROOTTE, GROOTTE);
 
         vorigeX = nx;
         vorigeY = ny;

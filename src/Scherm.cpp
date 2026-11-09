@@ -30,9 +30,14 @@ namespace pws {
     }
 
     void Scherm::beginFrame() {
-        // Begin een nieuw frame door de sprite te wissen
-        sprite.fillSprite(TFT_BLACK);
+        // Bewaar de pixels; verzamel alleen de wijzigingen van dit frame opnieuw.
         dirty = false;
+    }
+
+    void Scherm::clear(uint16_t kleur) {
+        // Alleen gebruiken bij een schermwissel of volledige hertekening.
+        sprite.fillSprite(kleur);
+        markDirty(0, 0, breedte, hoogte);
     }
 
     void Scherm::markDirty(int16_t x, int16_t y, int16_t w, int16_t h) {
@@ -92,3 +97,4 @@ namespace pws {
         return hoogte;
     }
 }
+
