@@ -23,20 +23,40 @@ namespace pws {
     );
 
     void InputSystem::begin() {
+        const uint32_t nu = millis();
+
         for (std::size_t i = 0; i < AANTAL_KNOPPEN; i++) {
             pinMode(knopPinnen[i], INPUT_PULLUP);
 
             knopStates[i] = digitalRead(knopPinnen[i]) == LOW;
             vorigeKnopStates[i] = knopStates[i];
+            ruweKnopStates[i] = knopStates[i];
+            laatsteVerandering[i] = nu;
         }
     }
 
     void InputSystem::updateKnopStates() {
+        const uint32_t nu = millis();
+
         for (std::size_t i = 0; i < AANTAL_KNOPPEN; i++) {
+            // Bewaar de stabiele toestand van het vorige gameframe.
             vorigeKnopStates[i] = knopStates[i];
 
-            knopStates[i] =
+            const bool ruweToestand =
                 digitalRead(knopPinnen[i]) == LOW;
+
+            // Elke gemeten overgang start de wachttijd voor deze knop opnieuw.
+            if (ruweToestand != ruweKnopStates[i]) {
+                ruweKnopStates[i] = ruweToestand;
+                laatsteVerandering[i] = nu;
+            }
+
+            // Filter zowel indrukken als loslaten, zonder de gameloop te blokkeren.
+            // Unsigned aftrekken blijft ook werken wanneer millis() rondloopt.
+            if (static_cast<uint32_t>(nu - laatsteVerandering[i])
+                >= ONTDENDER_TIJD_MS) {
+                knopStates[i] = ruweKnopStates[i];
+            }
         }
     }
 

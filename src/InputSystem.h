@@ -4,7 +4,6 @@
 
 #include <Arduino.h>
 #include <cstddef>
-#include <cstdint>
 
 // Knop pins (GPIO)
 #define PIN_KNOP_D_UP 4
@@ -38,11 +37,20 @@ namespace pws {
 
     class InputSystem {
     private:
+        static constexpr uint32_t ONTDENDER_TIJD_MS = 20;
+
+        // Alleen de geaccepteerde, stabiele toestanden worden aan games doorgegeven.
         bool knopStates[AANTAL_KNOPPEN] = {};
         bool vorigeKnopStates[AANTAL_KNOPPEN] = {};
 
+        // Iedere knop heeft een eigen ruwe toestand en timer.
+        bool ruweKnopStates[AANTAL_KNOPPEN] = {};
+        uint32_t laatsteVerandering[AANTAL_KNOPPEN] = {};
+
     public:
         void begin();
+
+        // Eenmaal per gameframe aanroepen, voordat de game de knoppen uitleest.
         void updateKnopStates();
 
         [[nodiscard]] bool knopGedrukt(Knop knop) const;
