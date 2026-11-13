@@ -8,8 +8,8 @@ namespace pws {
         schermBreedte = scherm.getBreedte();
         schermHoogte = scherm.getHoogte();
 
-        x = (schermBreedte - GROOTTE) / 2.0f;
-        y = (schermHoogte - GROOTTE) / 2.0f;
+        x = static_cast<float>(schermBreedte - GROOTTE) / 2.0f;
+        y = static_cast<float>(schermHoogte - GROOTTE) / 2.0f;
 
         vorigeX = static_cast<int16_t>(x);
         vorigeY = static_cast<int16_t>(y);
@@ -44,12 +44,12 @@ namespace pws {
         if (x < 0) x = 0;
         if (y < 0) y = 0;
 
-        if (x > schermBreedte - GROOTTE) {
-            x = schermBreedte - GROOTTE;
+        if (x > static_cast<float>(schermBreedte) - GROOTTE) {
+            x = static_cast<float>(schermBreedte) - GROOTTE;
         }
 
-        if (y > schermHoogte - GROOTTE) {
-            y = schermHoogte - GROOTTE;
+        if (y > static_cast<float>(schermHoogte) - GROOTTE) {
+            y = static_cast<float>(schermHoogte) - GROOTTE;
         }
     }
 
@@ -58,8 +58,8 @@ namespace pws {
     void VierkantGame::render(Scherm& scherm) {
         TFT_eSprite& sprite = scherm.getSprite();
 
-        int16_t nx = static_cast<int16_t>(x);
-        int16_t ny = static_cast<int16_t>(y);
+        auto nx = static_cast<int16_t>(x);
+        auto ny = static_cast<int16_t>(y);
 
         // De vorige pixels blijven bewaard: bij stilstand is niets nodig.
         if (!eersteFrame &&
