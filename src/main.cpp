@@ -3,11 +3,12 @@
 #include "GameManager.h"
 #include "InputSystem.h"
 #include "Scherm.h"
+#include "RaylibTftPort.h"
 #include "VierkantGame.h"
 
 namespace {
 
-    constexpr uint32_t FRAME_INTERVAL_MS = 33; // Bovengrens van ongeveer 30 FPS.
+    constexpr uint32_t FRAME_INTERVAL_MS = 16; // Bovengrens van ongeveer 30 FPS.
     constexpr uint32_t DIAGNOSTIEK_INTERVAL_MS = 1000;
 
     pws::Scherm scherm;
@@ -19,6 +20,10 @@ namespace {
     uint32_t fpsTimerMs = 0;
     uint32_t frameAantal = 0;
     uint64_t tekenTotaalUs = 0;
+    uint64_t vergelijkTotaalUs = 0;
+    uint64_t verstuurTotaalUs = 0;
+    uint64_t pixelTotaal = 0;
+    uint32_t transfers = 0;
 
     void toonDiagnostiek(uint32_t nuMs) {
         const uint32_t verstrekenMs = nuMs - fpsTimerMs;
@@ -31,12 +36,22 @@ namespace {
             ? static_cast<float>(tekenTotaalUs) / frameAantal / 1000.0f
             : 0.0f;
 
-        // Inclusief software-rendering en de synchrone TFT-overdracht.
-        Serial.printf("FPS: %.1f | Tekenen + TFT: %.2f ms | Vrij PSRAM: %lu\n",
-            fps, tekenMs, static_cast<unsigned long>(ESP.getFreePsram()));
+        const float deler = frameAantal > 0 ? static_cast<float>(frameAantal) : 1.0f;
+        // Alle tijden zijn gemiddelden per gameframe, ook frames zonder transfer.
+        Serial.printf(
+            "FPS: %.1f | Framewerk: %.2f ms | Vergelijk: %.2f ms | "
+            "TFT: %.2f ms | Pixels/frame: %.0f | Transfers: %lu | Vrij PSRAM: %lu\n",
+            fps, tekenMs, vergelijkTotaalUs / deler / 1000.0f,
+            verstuurTotaalUs / deler / 1000.0f, pixelTotaal / deler,
+            static_cast<unsigned long>(transfers),
+            static_cast<unsigned long>(ESP.getFreePsram()));
 
         frameAantal = 0;
         tekenTotaalUs = 0;
+        vergelijkTotaalUs = 0;
+        verstuurTotaalUs = 0;
+        pixelTotaal = 0;
+        transfers = 0;
         fpsTimerMs = nuMs;
     }
 
@@ -80,6 +95,11 @@ void loop() {
     gameManager.render(scherm);
     scherm.endFrame();
     tekenTotaalUs += micros() - tekenStartUs;
+    const pws::SchermTransferMeting meting = pws::laatsteSchermTransfer();
+    vergelijkTotaalUs += meting.vergelijkenUs;
+    verstuurTotaalUs += meting.versturenUs;
+    pixelTotaal += meting.verstuurdePixels;
+    if (meting.verstuurdePixels > 0) ++transfers;
     ++frameAantal;
 
     toonDiagnostiek(millis());
