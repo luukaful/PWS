@@ -1,102 +1,83 @@
-
 #include "GameManager.h"
 
 namespace pws {
 
-    bool GameManager::voegGameToe(
-        const char* naam,
-        Game& game
-    ) {
+    bool GameManager::voegGameToe(const char* naam, Game& game) {
         if (aantalGames >= MAX_GAMES || naam == nullptr) {
             return false;
         }
 
-        games[aantalGames].naam = naam;
-        games[aantalGames].game = &game;
-
-        aantalGames++;
-
+        GameEntry& entry = games[aantalGames];
+        entry.naam = naam;
+        entry.game = &game;
+        ++aantalGames;
         return true;
     }
 
     void GameManager::begin() {
         actieveGame = nullptr;
         geselecteerdeGame = 0;
-        volledigVernieuwen = true;
+        menuGewijzigd = true;
     }
 
-    void GameManager::update(
-        float deltaTijd,
-        const InputSystem& input,
-        Scherm& scherm
-    ) {
-        // Hoofdmenu
+    void GameManager::update(float deltaTijd, const InputSystem& input, Scherm& scherm) {
         if (actieveGame == nullptr) {
-            if (aantalGames == 0) {
-                return;
-            }
-
-            if (input.knopZojuistGedrukt(Knop::D_DOWN)) {
-                geselecteerdeGame =
-                    (geselecteerdeGame + 1) % aantalGames;
-
-                volledigVernieuwen = true;
-            }
-            else if (input.knopZojuistGedrukt(Knop::D_UP)) {
-                geselecteerdeGame =
-                    (geselecteerdeGame + aantalGames - 1)
-                    % aantalGames;
-
-                volledigVernieuwen = true;
-            }
-
-            // Geselecteerde game starten
-            if (input.knopZojuistGedrukt(Knop::A)) {
-                actieveGame = games[geselecteerdeGame].game;
-
-                // Verwijder het menu voordat de game zijn beginbeeld opbouwt.
-                scherm.clear();
-                actieveGame->begin(scherm);
-                volledigVernieuwen = true;
-            }
-
+            updateMenu(input, scherm);
             return;
         }
 
-        // Met START terug naar het hoofdmenu
         if (input.knopZojuistGedrukt(Knop::START)) {
             actieveGame = nullptr;
-            volledigVernieuwen = true;
+            menuGewijzigd = true;
             return;
         }
 
-        // Actieve game bijwerken
         actieveGame->update(deltaTijd, input);
     }
 
-    void GameManager::render(Scherm& scherm) {
-        if (actieveGame == nullptr) {
-            // Menu alleen tekenen als het veranderd is
-            if (volledigVernieuwen) {
-                tekenMenu(scherm);
-            }
-        } else {
-            actieveGame->render(scherm);
+    void GameManager::updateMenu(const InputSystem& input, Scherm& scherm) {
+        if (aantalGames == 0) {
+            return;
         }
 
-        // clear() markeert bij een volledige hertekening het hele scherm.
-        volledigVernieuwen = false;
+        // Modulo laat de selectie doorlopen van het laatste naar het eerste spel.
+        if (input.knopZojuistGedrukt(Knop::D_DOWN)) {
+            geselecteerdeGame = (geselecteerdeGame + 1) % aantalGames;
+            menuGewijzigd = true;
+        } else if (input.knopZojuistGedrukt(Knop::D_UP)) {
+            geselecteerdeGame = (geselecteerdeGame + aantalGames - 1) % aantalGames;
+            menuGewijzigd = true;
+        }
+
+        if (input.knopZojuistGedrukt(Knop::A)) {
+            actieveGame = games[geselecteerdeGame].game;
+
+            // Wis het menu voordat begin() eventueel al het nieuwe spelbeeld tekent.
+            scherm.clear();
+            actieveGame->begin(scherm);
+        }
+    }
+
+    void GameManager::render(Scherm& scherm) {
+        if (actieveGame != nullptr) {
+            actieveGame->render(scherm);
+        } else if (menuGewijzigd) {
+            tekenMenu(scherm);
+        }
+
+        menuGewijzigd = false;
     }
 
     void GameManager::tekenMenu(Scherm& scherm) {
-        // Verwijder het vorige spelbeeld of de vorige menu-inhoud.
+        constexpr int16_t RIJ_START_Y = 69;
+        constexpr int16_t RIJ_AFSTAND = 28;
+        constexpr int16_t RIJ_HOOGTE = 24;
+
         scherm.clear();
         TFT_eSprite& sprite = scherm.getSprite();
+        const int16_t breedte = scherm.getBreedte();
+        const int16_t hoogte = scherm.getHoogte();
 
-        int16_t breedte = scherm.getBreedte();
-        int16_t hoogte = scherm.getHoogte();
-
-        // Titel
         sprite.setTextColor(TFT_WHITE);
         sprite.drawString("PWS CONSOLE", 14, 10, 4);
 
@@ -104,45 +85,21 @@ namespace pws {
         sprite.drawString("Selecteer een spel:", 14, 46, 2);
 
         if (aantalGames == 0) {
-            sprite.drawString(
-                "Geen spellen gevonden",
-                14, 80, 2
-            );
+            sprite.drawString("Geen spellen gevonden", 14, 80, 2);
         }
 
-        // Geregistreerde games tekenen
-        for (int i = 0; i < aantalGames; i++) {
-            int16_t y = 69 + i * 28;
+        for (uint8_t i = 0; i < aantalGames; ++i) {
+            const int16_t y = RIJ_START_Y + i * RIJ_AFSTAND;
+            const bool geselecteerd = i == geselecteerdeGame;
+            const uint16_t achtergrond = geselecteerd ? TFT_BLUE : TFT_DARKGREY;
 
-            bool geselecteerd = i == geselecteerdeGame;
-
-            uint16_t achtergrond = geselecteerd
-                ? TFT_BLUE
-                : TFT_DARKGREY;
-
-            sprite.fillRoundRect(
-                12, y,
-                breedte - 24, 24,
-                4,
-                achtergrond
-            );
-
+            sprite.fillRoundRect(12, y, breedte - 24, RIJ_HOOGTE, 4, achtergrond);
             sprite.setTextColor(TFT_WHITE, achtergrond);
-
-            sprite.drawString(
-                games[i].naam,
-                24, y + 3, 2
-            );
+            sprite.drawString(games[i].naam, 24, y + 3, 2);
         }
 
-        // Bedieningsinstructies
         sprite.setTextColor(TFT_LIGHTGREY);
-
-        sprite.drawString(
-            "A: Start   START: Terug",
-            14, hoogte - 22, 2
-        );
+        sprite.drawString("A: Start   START: Terug", 14, hoogte - 22, 2);
     }
 
-}
-
+} // namespace pws

@@ -1,8 +1,10 @@
-
 #include "InputSystem.h"
+
+#include <Arduino.h>
 
 namespace pws {
 
+    // De volgorde moet overeenkomen met de waarden in enum class Knop.
     static constexpr uint8_t knopPinnen[] = {
         PIN_KNOP_D_UP,
         PIN_KNOP_D_DOWN,
@@ -15,69 +17,70 @@ namespace pws {
         PIN_KNOP_START
     };
 
-    // Controleer of iedere knop een GPIO-pin heeft
     static_assert(
-        sizeof(knopPinnen) / sizeof(knopPinnen[0])
-            == AANTAL_KNOPPEN,
+        sizeof(knopPinnen) / sizeof(knopPinnen[0]) == AANTAL_KNOPPEN,
         "Aantal GPIO-pinnen komt niet overeen met aantal knoppen!"
     );
 
     void InputSystem::begin() {
-        const uint32_t nu = millis();
+        const uint32_t nuMs = millis();
 
-        for (std::size_t i = 0; i < AANTAL_KNOPPEN; i++) {
+        for (std::size_t i = 0; i < AANTAL_KNOPPEN; ++i) {
             pinMode(knopPinnen[i], INPUT_PULLUP);
 
-            knopStates[i] = digitalRead(knopPinnen[i]) == LOW;
-            vorigeKnopStates[i] = knopStates[i];
-            ruweKnopStates[i] = knopStates[i];
-            laatsteVerandering[i] = nu;
+            KnopStatus& status = knopStatus[i];
+            status.gedrukt = digitalRead(knopPinnen[i]) == LOW;
+
+            // Een knop die bij het opstarten al ingedrukt is, telt niet als nieuwe druk.
+            status.vorigFrameGedrukt = status.gedrukt;
+            status.ruweToestand = status.gedrukt;
+            status.laatsteVeranderingMs = nuMs;
         }
     }
 
     void InputSystem::updateKnopStates() {
-        const uint32_t nu = millis();
+        const uint32_t nuMs = millis();
 
-        for (std::size_t i = 0; i < AANTAL_KNOPPEN; i++) {
-            // Bewaar de stabiele toestand van het vorige gameframe.
-            vorigeKnopStates[i] = knopStates[i];
+        for (std::size_t i = 0; i < AANTAL_KNOPPEN; ++i) {
+            KnopStatus& status = knopStatus[i];
+            status.vorigFrameGedrukt = status.gedrukt;
 
-            const bool ruweToestand =
-                digitalRead(knopPinnen[i]) == LOW;
+            const bool ruweToestand = digitalRead(knopPinnen[i]) == LOW;
 
             // Elke gemeten overgang start de wachttijd voor deze knop opnieuw.
-            if (ruweToestand != ruweKnopStates[i]) {
-                ruweKnopStates[i] = ruweToestand;
-                laatsteVerandering[i] = nu;
+            if (ruweToestand != status.ruweToestand) {
+                status.ruweToestand = ruweToestand;
+                status.laatsteVeranderingMs = nuMs;
             }
 
             // Filter zowel indrukken als loslaten, zonder de gameloop te blokkeren.
             // Unsigned aftrekken blijft ook werken wanneer millis() rondloopt.
-            if (static_cast<uint32_t>(nu - laatsteVerandering[i])
-                >= ONTDENDER_TIJD_MS) {
-                knopStates[i] = ruweKnopStates[i];
+            const uint32_t stabieleTijdMs = nuMs - status.laatsteVeranderingMs;
+            if (stabieleTijdMs >= ONTDENDER_TIJD_MS) {
+                status.gedrukt = status.ruweToestand;
             }
         }
     }
 
     bool InputSystem::knopGedrukt(Knop knop) const {
-        std::size_t index = static_cast<std::size_t>(knop);
+        const std::size_t index = static_cast<std::size_t>(knop);
 
         if (index >= AANTAL_KNOPPEN) {
             return false;
         }
 
-        return knopStates[index];
+        return knopStatus[index].gedrukt;
     }
 
     bool InputSystem::knopZojuistGedrukt(Knop knop) const {
-        std::size_t index = static_cast<std::size_t>(knop);
+        const std::size_t index = static_cast<std::size_t>(knop);
 
         if (index >= AANTAL_KNOPPEN) {
             return false;
         }
 
-        return knopStates[index] && !vorigeKnopStates[index];
+        const KnopStatus& status = knopStatus[index];
+        return status.gedrukt && !status.vorigFrameGedrukt;
     }
 
-}
+} // namespace pws

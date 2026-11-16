@@ -1,20 +1,19 @@
-
 #ifndef PWS_INPUTSYSTEM_H
 #define PWS_INPUTSYSTEM_H
 
-#include <Arduino.h>
 #include <cstddef>
+#include <cstdint>
 
-// Knop pins (GPIO)
-#define PIN_KNOP_D_UP 4
-#define PIN_KNOP_D_DOWN 5
-#define PIN_KNOP_D_LEFT 6
-#define PIN_KNOP_D_RIGHT 7
-#define PIN_KNOP_A 15
-#define PIN_KNOP_B 16
-#define PIN_KNOP_X 17
-#define PIN_KNOP_Y 18
-#define PIN_KNOP_START 8
+// De knoppen verbinden hun GPIO-pin met GND; INPUT_PULLUP houdt ze anders hoog.
+constexpr uint8_t PIN_KNOP_D_UP = 4;
+constexpr uint8_t PIN_KNOP_D_DOWN = 5;
+constexpr uint8_t PIN_KNOP_D_LEFT = 6;
+constexpr uint8_t PIN_KNOP_D_RIGHT = 7;
+constexpr uint8_t PIN_KNOP_A = 15;
+constexpr uint8_t PIN_KNOP_B = 16;
+constexpr uint8_t PIN_KNOP_X = 17;
+constexpr uint8_t PIN_KNOP_Y = 18;
+constexpr uint8_t PIN_KNOP_START = 8;
 
 namespace pws {
 
@@ -36,17 +35,6 @@ namespace pws {
         static_cast<std::size_t>(Knop::AANTAL_KNOPPEN);
 
     class InputSystem {
-    private:
-        static constexpr uint32_t ONTDENDER_TIJD_MS = 20;
-
-        // Alleen de geaccepteerde, stabiele toestanden worden aan games doorgegeven.
-        bool knopStates[AANTAL_KNOPPEN] = {};
-        bool vorigeKnopStates[AANTAL_KNOPPEN] = {};
-
-        // Iedere knop heeft een eigen ruwe toestand en timer.
-        bool ruweKnopStates[AANTAL_KNOPPEN] = {};
-        uint32_t laatsteVerandering[AANTAL_KNOPPEN] = {};
-
     public:
         void begin();
 
@@ -54,9 +42,23 @@ namespace pws {
         void updateKnopStates();
 
         [[nodiscard]] bool knopGedrukt(Knop knop) const;
+
+        // Blijft het hele frame waar; uitlezen verbruikt de drukgebeurtenis niet.
         [[nodiscard]] bool knopZojuistGedrukt(Knop knop) const;
+
+    private:
+        static constexpr uint32_t ONTDENDER_TIJD_MS = 20;
+
+        struct KnopStatus {
+            bool gedrukt = false;
+            bool vorigFrameGedrukt = false;
+            bool ruweToestand = false;
+            uint32_t laatsteVeranderingMs = 0;
+        };
+
+        KnopStatus knopStatus[AANTAL_KNOPPEN] = {};
     };
 
-}
+} // namespace pws
 
 #endif // PWS_INPUTSYSTEM_H

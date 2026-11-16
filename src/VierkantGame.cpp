@@ -1,8 +1,6 @@
-
 #include "VierkantGame.h"
 
 namespace pws {
-
 
     void VierkantGame::begin(Scherm& scherm) {
         schermBreedte = scherm.getBreedte();
@@ -10,85 +8,70 @@ namespace pws {
 
         x = static_cast<float>(schermBreedte - GROOTTE) / 2.0f;
         y = static_cast<float>(schermHoogte - GROOTTE) / 2.0f;
-
         vorigeX = static_cast<int16_t>(x);
         vorigeY = static_cast<int16_t>(y);
-
         eersteFrame = true;
     }
 
-
-    void VierkantGame::update(
-        float deltaTime,
-        const InputSystem& input
-    ) {
-        float beweging = SNELHEID * deltaTime;
+    void VierkantGame::update(float deltaTijd, const InputSystem& input) {
+        const float beweging = SNELHEID * deltaTijd;
 
         if (input.knopGedrukt(Knop::D_LEFT)) {
             x -= beweging;
         }
-
         if (input.knopGedrukt(Knop::D_RIGHT)) {
             x += beweging;
         }
-
         if (input.knopGedrukt(Knop::D_UP)) {
             y -= beweging;
         }
-
         if (input.knopGedrukt(Knop::D_DOWN)) {
             y += beweging;
         }
 
-        // Voorkom dat de speler buiten beeld gaat
-        if (x < 0) x = 0;
-        if (y < 0) y = 0;
+        // x en y zijn de linkerbovenhoek; het hele vierkant moet binnen beeld blijven.
+        const float maxX = static_cast<float>(schermBreedte) - GROOTTE;
+        const float maxY = static_cast<float>(schermHoogte) - GROOTTE;
 
-        if (x > static_cast<float>(schermBreedte) - GROOTTE) {
-            x = static_cast<float>(schermBreedte) - GROOTTE;
+        if (x < 0.0f) {
+            x = 0.0f;
         }
-
-        if (y > static_cast<float>(schermHoogte) - GROOTTE) {
-            y = static_cast<float>(schermHoogte) - GROOTTE;
+        if (y < 0.0f) {
+            y = 0.0f;
+        }
+        if (x > maxX) {
+            x = maxX;
+        }
+        if (y > maxY) {
+            y = maxY;
         }
     }
 
-
-
     void VierkantGame::render(Scherm& scherm) {
-        TFT_eSprite& sprite = scherm.getSprite();
+        const auto pixelX = static_cast<int16_t>(x);
+        const auto pixelY = static_cast<int16_t>(y);
 
-        auto nx = static_cast<int16_t>(x);
-        auto ny = static_cast<int16_t>(y);
-
-        // De vorige pixels blijven bewaard: bij stilstand is niets nodig.
-        if (!eersteFrame &&
-            nx == vorigeX &&
-            ny == vorigeY) {
+        // De sprite bewaart het vorige beeld; zonder zichtbare beweging is tekenen overbodig.
+        if (!eersteFrame && pixelX == vorigeX && pixelY == vorigeY) {
             return;
         }
 
-        // Herstel eerst de zwarte achtergrond op de oude positie.
-        // Bij een getekende achtergrond moet hier die achtergrond terugkomen.
+        TFT_eSprite& sprite = scherm.getSprite();
+
+        // Dit spel heeft een zwarte achtergrond. Bij een afbeelding moet je hier
+        // het oorspronkelijke stukje achtergrond herstellen.
         if (!eersteFrame) {
-            sprite.fillRect(
-                vorigeX, vorigeY, GROOTTE, GROOTTE, TFT_BLACK
-            );
+            sprite.fillRect(vorigeX, vorigeY, GROOTTE, GROOTTE, TFT_BLACK);
             scherm.markDirty(vorigeX, vorigeY, GROOTTE, GROOTTE);
         }
 
-        // Teken daarna de nieuwe positie, ook als beide posities overlappen.
-        sprite.fillRect(
-            nx, ny, GROOTTE, GROOTTE, TFT_GREEN
-        );
-        // Scherm voegt deze rechthoek samen met de oude positie.
-        scherm.markDirty(nx, ny, GROOTTE, GROOTTE);
+        // Eerst wissen, dan tekenen: zo blijft het vierkant ook bij overlap intact.
+        sprite.fillRect(pixelX, pixelY, GROOTTE, GROOTTE, TFT_GREEN);
+        scherm.markDirty(pixelX, pixelY, GROOTTE, GROOTTE);
 
-        vorigeX = nx;
-        vorigeY = ny;
+        vorigeX = pixelX;
+        vorigeY = pixelY;
         eersteFrame = false;
     }
 
-
-
-}
+} // namespace pws

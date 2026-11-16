@@ -1,4 +1,3 @@
-
 #ifndef PWS_GAMEMANAGER_H
 #define PWS_GAMEMANAGER_H
 
@@ -7,6 +6,14 @@
 namespace pws {
 
     class GameManager {
+    public:
+        // Naam en game worden niet gekopieerd en moeten beschikbaar blijven.
+        bool voegGameToe(const char* naam, Game& game);
+
+        void begin();
+        void update(float deltaTijd, const InputSystem& input, Scherm& scherm);
+        void render(Scherm& scherm);
+
     private:
         static constexpr uint8_t MAX_GAMES = 5;
 
@@ -20,28 +27,15 @@ namespace pws {
         uint8_t aantalGames = 0;
         uint8_t geselecteerdeGame = 0;
 
-        // nullptr betekent dat het menu actief is
+        // nullptr betekent dat het menu actief is.
         Game* actieveGame = nullptr;
 
-        // Bij een schermwissel alles opnieuw tekenen
-        bool volledigVernieuwen = true;
+        bool menuGewijzigd = true;
 
+        void updateMenu(const InputSystem& input, Scherm& scherm);
         void tekenMenu(Scherm& scherm);
-
-    public:
-        bool voegGameToe(const char* naam, Game& game);
-
-        void begin();
-
-        void update(
-            float deltaTijd,
-            const InputSystem& input,
-            Scherm& scherm
-        );
-
-        void render(Scherm& scherm);
     };
 
-}
+} // namespace pws
 
 #endif // PWS_GAMEMANAGER_H
