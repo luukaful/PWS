@@ -7,7 +7,7 @@
 
 namespace {
 
-    constexpr uint32_t FRAME_INTERVAL_MS = 16;
+    constexpr uint32_t FRAME_INTERVAL_MS = 33; // Bovengrens van ongeveer 30 FPS.
     constexpr uint32_t DIAGNOSTIEK_INTERVAL_MS = 1000;
 
     pws::Scherm scherm;
@@ -18,8 +18,7 @@ namespace {
     uint32_t laatsteFrameMs = 0;
     uint32_t fpsTimerMs = 0;
     uint32_t frameAantal = 0;
-    uint64_t transferTotaalUs = 0;
-    uint32_t transferAantal = 0;
+    uint64_t tekenTotaalUs = 0;
 
     void toonDiagnostiek(uint32_t nuMs) {
         const uint32_t verstrekenMs = nuMs - fpsTimerMs;
@@ -27,22 +26,17 @@ namespace {
             return;
         }
 
-        // FPS telt gameframes; alleen gewijzigde beelden tellen als schermtransfer.
         const float fps = frameAantal * 1000.0f / verstrekenMs;
-        const float gemiddeldeTransferUs = transferAantal > 0
-            ? static_cast<float>(transferTotaalUs) / transferAantal
+        const float tekenMs = frameAantal > 0
+            ? static_cast<float>(tekenTotaalUs) / frameAantal / 1000.0f
             : 0.0f;
 
-        Serial.printf(
-            "FPS: %.1f | Transfers: %lu | Transfer: %.1f us\n",
-            fps,
-            static_cast<unsigned long>(transferAantal),
-            gemiddeldeTransferUs
-        );
+        // Inclusief software-rendering en de synchrone TFT-overdracht.
+        Serial.printf("FPS: %.1f | Tekenen + TFT: %.2f ms | Vrij PSRAM: %lu\n",
+            fps, tekenMs, static_cast<unsigned long>(ESP.getFreePsram()));
 
         frameAantal = 0;
-        transferTotaalUs = 0;
-        transferAantal = 0;
+        tekenTotaalUs = 0;
         fpsTimerMs = nuMs;
     }
 
@@ -62,39 +56,31 @@ void setup() {
     gameManager.voegGameToe("Vierkant", vierkantGame);
     gameManager.begin();
 
-    Serial.println("Console gestart!");
-
+    Serial.println("Console met raylib gestart!");
     laatsteFrameMs = millis();
     fpsTimerMs = laatsteFrameMs;
 }
 
 void loop() {
     const uint32_t nuMs = millis();
-    // Unsigned aftrekken houdt de tijdmeting geldig wanneer millis() rondloopt.
     const uint32_t verstrekenMs = nuMs - laatsteFrameMs;
     if (verstrekenMs < FRAME_INTERVAL_MS) {
+        delay(1);
         return;
     }
-
-    const float deltaTijd = verstrekenMs / 1000.0f;
     laatsteFrameMs = nuMs;
 
+    // Een lange hapering mag de speler niet ineens over het hele scherm sturen.
+    const float deltaTijd = (verstrekenMs > 100 ? 100 : verstrekenMs) / 1000.0f;
     inputSystem.updateKnopStates();
-
-    // Reset de wijzigingen vóór update(): bij een spelwissel kan begin() al tekenen.
-    scherm.beginFrame();
     gameManager.update(deltaTijd, inputSystem, scherm);
+
+    const uint32_t tekenStartUs = micros();
+    scherm.beginFrame();
     gameManager.render(scherm);
-
-    const uint32_t transferStartUs = micros();
-    const bool verstuurd = scherm.endFrame();
-    const uint32_t transferDuurUs = micros() - transferStartUs;
-
+    scherm.endFrame();
+    tekenTotaalUs += micros() - tekenStartUs;
     ++frameAantal;
-    if (verstuurd) {
-        transferTotaalUs += transferDuurUs;
-        ++transferAantal;
-    }
 
     toonDiagnostiek(millis());
 }

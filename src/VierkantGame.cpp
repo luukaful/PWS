@@ -8,9 +8,6 @@ namespace pws {
 
         x = static_cast<float>(schermBreedte - GROOTTE) / 2.0f;
         y = static_cast<float>(schermHoogte - GROOTTE) / 2.0f;
-        vorigeX = static_cast<int16_t>(x);
-        vorigeY = static_cast<int16_t>(y);
-        eersteFrame = true;
     }
 
     void VierkantGame::update(float deltaTijd, const InputSystem& input) {
@@ -47,31 +44,9 @@ namespace pws {
         }
     }
 
-    void VierkantGame::render(Scherm& scherm) {
-        const auto pixelX = static_cast<int16_t>(x);
-        const auto pixelY = static_cast<int16_t>(y);
-
-        // De sprite bewaart het vorige beeld; zonder zichtbare beweging is tekenen overbodig.
-        if (!eersteFrame && pixelX == vorigeX && pixelY == vorigeY) {
-            return;
-        }
-
-        TFT_eSprite& sprite = scherm.getSprite();
-
-        // Dit spel heeft een zwarte achtergrond. Bij een afbeelding moet je hier
-        // het oorspronkelijke stukje achtergrond herstellen.
-        if (!eersteFrame) {
-            sprite.fillRect(vorigeX, vorigeY, GROOTTE, GROOTTE, TFT_BLACK);
-            scherm.markDirty(vorigeX, vorigeY, GROOTTE, GROOTTE);
-        }
-
-        // Eerst wissen, dan tekenen: zo blijft het vierkant ook bij overlap intact.
-        sprite.fillRect(pixelX, pixelY, GROOTTE, GROOTTE, TFT_GREEN);
-        scherm.markDirty(pixelX, pixelY, GROOTTE, GROOTTE);
-
-        vorigeX = pixelX;
-        vorigeY = pixelY;
-        eersteFrame = false;
+    void VierkantGame::render(Scherm&) {
+        // De achtergrond is aan het begin van dit frame al gewist.
+        DrawRectangle(static_cast<int>(x), static_cast<int>(y), GROOTTE, GROOTTE, GREEN);
     }
 
 } // namespace pws

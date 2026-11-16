@@ -30,8 +30,6 @@ namespace pws {
         // nullptr betekent dat het menu actief is.
         Game* actieveGame = nullptr;
 
-        bool menuGewijzigd = true;
-
         void updateMenu(const InputSystem& input, Scherm& scherm);
         void tekenMenu(Scherm& scherm);
     };

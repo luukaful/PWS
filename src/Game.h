@@ -10,13 +10,13 @@ namespace pws {
     public:
         virtual ~Game() = default;
 
-        // Wordt bij elke start aangeroepen, ook wanneer hetzelfde spel opnieuw opent.
+        // Reset de speltoestand bij elke start. Tekenen gebeurt alleen in render().
         virtual void begin(Scherm& scherm) = 0;
 
         // deltaTijd is de verstreken tijd in seconden sinds het vorige frame.
         virtual void update(float deltaTijd, const InputSystem& input) = 0;
 
-        // Teken in de sprite en markeer gewijzigde gebieden met scherm.markDirty().
+        // Teken elk frame het volledige spelbeeld met raylib.
         virtual void render(Scherm& scherm) = 0;
     };
 

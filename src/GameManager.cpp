@@ -17,7 +17,6 @@ namespace pws {
     void GameManager::begin() {
         actieveGame = nullptr;
         geselecteerdeGame = 0;
-        menuGewijzigd = true;
     }
 
     void GameManager::update(float deltaTijd, const InputSystem& input, Scherm& scherm) {
@@ -28,7 +27,6 @@ namespace pws {
 
         if (input.knopZojuistGedrukt(Knop::START)) {
             actieveGame = nullptr;
-            menuGewijzigd = true;
             return;
         }
 
@@ -43,17 +41,13 @@ namespace pws {
         // Modulo laat de selectie doorlopen van het laatste naar het eerste spel.
         if (input.knopZojuistGedrukt(Knop::D_DOWN)) {
             geselecteerdeGame = (geselecteerdeGame + 1) % aantalGames;
-            menuGewijzigd = true;
         } else if (input.knopZojuistGedrukt(Knop::D_UP)) {
             geselecteerdeGame = (geselecteerdeGame + aantalGames - 1) % aantalGames;
-            menuGewijzigd = true;
         }
 
         if (input.knopZojuistGedrukt(Knop::A)) {
             actieveGame = games[geselecteerdeGame].game;
 
-            // Wis het menu voordat begin() eventueel al het nieuwe spelbeeld tekent.
-            scherm.clear();
             actieveGame->begin(scherm);
         }
     }
@@ -61,11 +55,10 @@ namespace pws {
     void GameManager::render(Scherm& scherm) {
         if (actieveGame != nullptr) {
             actieveGame->render(scherm);
-        } else if (menuGewijzigd) {
+        } else {
+            // Ook het stilstaande menu moet na ClearBackground() opnieuw worden getekend.
             tekenMenu(scherm);
         }
-
-        menuGewijzigd = false;
     }
 
     void GameManager::tekenMenu(Scherm& scherm) {
@@ -73,33 +66,27 @@ namespace pws {
         constexpr int16_t RIJ_AFSTAND = 28;
         constexpr int16_t RIJ_HOOGTE = 24;
 
-        scherm.clear();
-        TFT_eSprite& sprite = scherm.getSprite();
         const int16_t breedte = scherm.getBreedte();
         const int16_t hoogte = scherm.getHoogte();
 
-        sprite.setTextColor(TFT_WHITE);
-        sprite.drawString("PWS CONSOLE", 14, 10, 4);
+        DrawText("PWS CONSOLE", 14, 10, 24, WHITE);
 
-        sprite.setTextColor(TFT_LIGHTGREY);
-        sprite.drawString("Selecteer een spel:", 14, 46, 2);
+        DrawText("Selecteer een spel:", 14, 46, 16, LIGHTGRAY);
 
         if (aantalGames == 0) {
-            sprite.drawString("Geen spellen gevonden", 14, 80, 2);
+            DrawText("Geen spellen gevonden", 14, 80, 16, LIGHTGRAY);
         }
 
         for (uint8_t i = 0; i < aantalGames; ++i) {
             const int16_t y = RIJ_START_Y + i * RIJ_AFSTAND;
             const bool geselecteerd = i == geselecteerdeGame;
-            const uint16_t achtergrond = geselecteerd ? TFT_BLUE : TFT_DARKGREY;
+            const Color achtergrond = geselecteerd ? BLUE : DARKGRAY;
 
-            sprite.fillRoundRect(12, y, breedte - 24, RIJ_HOOGTE, 4, achtergrond);
-            sprite.setTextColor(TFT_WHITE, achtergrond);
-            sprite.drawString(games[i].naam, 24, y + 3, 2);
+            DrawRectangle(12, y, breedte - 24, RIJ_HOOGTE, achtergrond);
+            DrawText(games[i].naam, 24, y + 4, 16, WHITE);
         }
 
-        sprite.setTextColor(TFT_LIGHTGREY);
-        sprite.drawString("A: Start   START: Terug", 14, hoogte - 22, 2);
+        DrawText("A: Start   START: Terug", 14, hoogte - 22, 12, LIGHTGRAY);
     }
 
 } // namespace pws

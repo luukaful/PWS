@@ -1,87 +1,52 @@
 #include "Scherm.h"
+#include "RaylibTftPort.h"
 
-#include <algorithm>
 #include <Arduino.h>
 
 namespace pws {
 
     bool Scherm::begin() {
+        // Deze ESP32-port gebruikt PSRAM voor raylib-geheugenallocaties.
+        if (!psramFound()) {
+            Serial.println("Geen PSRAM gevonden. Controleer de module en het PSRAM-profiel.");
+            return false;
+        }
+
+        Serial.printf("PSRAM: %lu bytes; vrij: %lu bytes\n",
+            static_cast<unsigned long>(ESP.getPsramSize()),
+            static_cast<unsigned long>(ESP.getFreePsram()));
+
         tft.init();
         tft.setRotation(1);
         tft.fillScreen(TFT_BLACK);
-
         breedte = tft.width();
         hoogte = tft.height();
 
-        // Acht bits per pixel beperkt het geheugengebruik van de volledige framebuffer.
-        sprite.setColorDepth(8);
-        if (sprite.createSprite(breedte, hoogte) == nullptr) {
-            Serial.println("Fout bij het maken van de sprite!");
+        if (!verbindRaylibScherm(tft)) {
+            Serial.println("Kon de raylib-schermkoppeling niet initialiseren.");
             return false;
         }
 
-        sprite.fillSprite(TFT_BLACK);
+        // Op deze port maakt InitWindow() framebuffers aan voor het fysieke TFT.
+        SetTraceLogLevel(LOG_WARNING);
+        InitWindow(breedte, hoogte, "PWS Console");
+        if (!IsWindowReady()) {
+            return false;
+        }
+
+        // main.cpp bepaalt het tempo. Zo wachten we niet tweemaal per frame.
+        SetTargetFPS(0);
         return true;
     }
 
-    void Scherm::beginFrame() {
-        dirty = false;
+    void Scherm::beginFrame(Color achtergrond) {
+        BeginDrawing();
+        ClearBackground(achtergrond);
     }
 
-    void Scherm::clear(uint16_t kleur) {
-        sprite.fillSprite(kleur);
-        markDirty(0, 0, breedte, hoogte);
-    }
-
-    void Scherm::markDirty(int16_t x, int16_t y, int16_t gebiedBreedte, int16_t gebiedHoogte) {
-        if (gebiedBreedte <= 0 || gebiedHoogte <= 0) {
-            return;
-        }
-
-        // Knip het gebied af op de schermranden voordat het wordt samengevoegd.
-        const int16_t x0 = std::max<int16_t>(0, x);
-        const int16_t y0 = std::max<int16_t>(0, y);
-        const int16_t x1 = std::min<int16_t>(breedte, x + gebiedBreedte);
-        const int16_t y1 = std::min<int16_t>(hoogte, y + gebiedHoogte);
-
-        if (x0 >= x1 || y0 >= y1) {
-            return;
-        }
-
-        if (!dirty) {
-            dirtyX0 = x0;
-            dirtyY0 = y0;
-            dirtyX1 = x1;
-            dirtyY1 = y1;
-            dirty = true;
-        } else {
-            // Alle wijzigingen gaan samen in één omvattende rechthoek naar het scherm.
-            dirtyX0 = std::min(dirtyX0, x0);
-            dirtyY0 = std::min(dirtyY0, y0);
-            dirtyX1 = std::max(dirtyX1, x1);
-            dirtyY1 = std::max(dirtyY1, y1);
-        }
-    }
-
-    bool Scherm::endFrame() {
-        if (!dirty) {
-            return false;
-        }
-
-        // Het eerste paar is de bestemming op het TFT, het tweede de bron in de sprite.
-        return sprite.pushSprite(
-            dirtyX0, dirtyY0,
-            dirtyX0, dirtyY0,
-            dirtyX1 - dirtyX0, dirtyY1 - dirtyY0
-        );
-    }
-
-    TFT_eSPI& Scherm::getTFT() {
-        return tft;
-    }
-
-    TFT_eSprite& Scherm::getSprite() {
-        return sprite;
+    void Scherm::endFrame() {
+        // Verwerkt de tekenopdrachten en verstuurt het beeld via RaylibTftPort.
+        EndDrawing();
     }
 
     int16_t Scherm::getBreedte() const {
