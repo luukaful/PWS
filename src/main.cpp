@@ -4,17 +4,19 @@
 #include "InputSystem.h"
 #include "Scherm.h"
 #include "RaylibTftPort.h"
-#include "VierkantGame.h"
+#include "games/VierkantGame.h"
+#include "games/snake/SnakeGame.h"
 
 namespace {
 
-    constexpr uint32_t FRAME_INTERVAL_MS = 16; // Bovengrens van ongeveer 30 FPS.
+    constexpr uint32_t FRAME_INTERVAL_MS = 16; // Bovengrens van ongeveer 62,5 FPS.
     constexpr uint32_t DIAGNOSTIEK_INTERVAL_MS = 1000;
 
     pws::Scherm scherm;
     pws::InputSystem inputSystem;
     pws::GameManager gameManager;
     pws::VierkantGame vierkantGame;
+    pws::SnakeGame snakeGame;
 
     uint32_t laatsteFrameMs = 0;
     uint32_t fpsTimerMs = 0;
@@ -68,6 +70,7 @@ void setup() {
     }
 
     inputSystem.begin();
+    gameManager.voegGameToe("Snake", snakeGame);
     gameManager.voegGameToe("Vierkant", vierkantGame);
     gameManager.begin();
 

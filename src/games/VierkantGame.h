@@ -1,7 +1,7 @@
 #ifndef PWS_VIERKANTGAME_H
 #define PWS_VIERKANTGAME_H
 
-#include "Game.h"
+#include "../Game.h"
 
 namespace pws {
 
